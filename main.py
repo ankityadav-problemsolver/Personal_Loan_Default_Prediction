@@ -9,7 +9,13 @@ from sklearn.metrics import roc_curve, auc
 from streamlit_shap import st_shap
 import time
 import os
+from time import strftime
 from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+import numpy as np
+from scipy.stats import gaussian_kde
+
+
 
 # Configuration
 st.set_page_config(
@@ -36,6 +42,59 @@ COLOR_SCHEME = {
     'card': '#1E293B',  # Card background
     'highlight': '#FFA500'  # Orange for highlighting
 }
+
+
+
+import streamlit as st
+from streamlit_lottie import st_lottie
+import requests
+
+# Load JSON animation from Lottie URL
+def load_lottieurl(url: str):
+    try:
+        r = requests.get(url)
+        if r.status_code == 200:
+            return r.json()
+    except Exception as e:
+        print(f"Error loading Lottie: {e}")
+    return None
+
+# 🎨 Lottie animation URLs (verified & working)
+sidebar_anim = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_t9gkkhz4.json")
+# main_anim = load_lottieurl("https://assets9.lottiefiles.com/packages/lf20_cyuxhbnc.json")
+main_anim = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_mjlh3hcy.json") 
+chart_anim = load_lottieurl("https://assets10.lottiefiles.com/packages/lf20_UJNc2t.json")
+footer_anim = load_lottieurl("https://assets1.lottiefiles.com/packages/lf20_jtbfg2nb.json")
+skills_anim = load_lottieurl("https://assets3.lottiefiles.com/private_files/lf30_5ttqpi.json")
+
+# 🎯 Sidebar with animation
+with st.sidebar:
+    st.markdown("### 🤖 Smart AI Dashboard")
+    if sidebar_anim:
+        st_lottie(sidebar_anim, height=180)
+    st.markdown("Welcome! Use the menu to explore predictions and risk factors.")
+
+# 🎯 Header
+st.markdown("## 📊 Loan Risk Prediction AI Dashboard")
+st.markdown("""
+### 📌 Overview  
+This tool helps banks evaluate loan applications using AI-driven analytics.
+""")
+
+# 🎯 Main AI animation
+if main_anim:
+    st_lottie(main_anim, height=260)
+
+
+
+
+     # Analytics mascot
+          # Data analysis
+chart_anim = load_lottieurl("https://assets2.lottiefiles.com/packages/lf20_49rdyysj.json")          # Graphs interaction        # Thank you # Project showreel
+loan_risk_anim = load_lottieurl("https://assets4.lottiefiles.com/packages/lf20_kyu7xb1v.json")
+
+
+
 
 # Premium Custom CSS with Dark Theme
 st.markdown(f"""
@@ -513,6 +572,45 @@ with tab2:
                 <h2>{avg_debtinc:.1f}%</h2>
             </div>
             """, unsafe_allow_html=True)
+         # Pie Charts Section
+        st.markdown("### Portfolio Composition")
+        pie_col1, pie_col2 = st.columns(2)
+        
+        with pie_col1:
+            if 'REASON' in filtered_df.columns:
+                reason_counts = filtered_df['REASON'].value_counts()
+                fig = px.pie(
+                    reason_counts,
+                    values=reason_counts.values,
+                    names=reason_counts.index.map({0: 'Home Improvement', 1: 'Debt Consolidation'}),
+                    title='Loan Purpose Distribution',
+                    color_discrete_sequence=[COLOR_SCHEME['primary'], COLOR_SCHEME['secondary']]
+                )
+                fig.update_layout(
+                    plot_bgcolor=COLOR_SCHEME['card'],
+                    paper_bgcolor=COLOR_SCHEME['background'],
+                    font=dict(color=COLOR_SCHEME['text']),
+                    height=400
+                )
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with pie_col2:
+            if 'BAD' in filtered_df.columns:
+                status_counts = filtered_df['BAD'].value_counts()
+                fig = px.pie(
+                    status_counts,
+                    values=status_counts.values,
+                    names=status_counts.index.map({0: 'Good Loans', 1: 'Bad Loans'}),
+                    title='Loan Status Distribution',
+                    color_discrete_sequence=[COLOR_SCHEME['success'], COLOR_SCHEME['danger']]
+                )
+                fig.update_layout(
+                    plot_bgcolor=COLOR_SCHEME['card'],
+                    paper_bgcolor=COLOR_SCHEME['background'],
+                    font=dict(color=COLOR_SCHEME['text']),
+                    height=400
+                )
+                st.plotly_chart(fig, use_container_width=True)
         
         # Distribution Plots
         st.markdown("### Feature Distributions")
@@ -520,28 +618,61 @@ with tab2:
         
         with dist_col1:
             if 'LOAN' in filtered_df.columns:
-                fig = px.histogram(
-                    filtered_df,
-                    x='LOAN',
-                    nbins=30,
-                    color_discrete_sequence=[COLOR_SCHEME['primary']],
-                    title='Loan Amount Distribution'
+
+
+                # Extract loan data for KDE
+                loan_data = filtered_df['LOAN'].dropna()
+
+                # Create the Histogram
+                hist = go.Histogram(
+                    x=loan_data,
+                    nbinsx=30,
+                    marker_color=COLOR_SCHEME['primary'],
+                    opacity=0.6,
+                    name='Loan Amount Distribution'
                 )
+
+                # Generate the KDE line
+                kde = gaussian_kde(loan_data)
+                x_range = np.linspace(loan_data.min(), loan_data.max(), 500)
+                kde_y = kde(x_range) * len(loan_data) * (loan_data.max() - loan_data.min()) / 30  # Normalize to match histogram scale
+
+                # KDE Line plot
+                kde_line = go.Scatter(
+                    x=x_range,
+                    y=kde_y,
+                    mode='lines',
+                    line=dict(color=COLOR_SCHEME['secondary'], width=2),
+                    name='KDE Curve'
+                )
+
+                # Combine histogram and KDE line
+                fig = go.Figure(data=[hist, kde_line])
+
+                # Update Layout
                 fig.update_layout(
                     plot_bgcolor=COLOR_SCHEME['card'],
                     paper_bgcolor=COLOR_SCHEME['background'],
                     font=dict(color=COLOR_SCHEME['text']),
                     height=400,
                     xaxis_title='Loan Amount (USD)',
-                    yaxis_title='Count'
+                    yaxis_title='Count',
+                    barmode='overlay'
                 )
+
+                # Display the Plotly chart in Streamlit
                 st.plotly_chart(fig, use_container_width=True)
+
+                # Display a description
                 st.markdown(f"""
                 <div style="color:{COLOR_SCHEME['text']};">
-                    <p>Distribution of loan amounts in the portfolio. Most loans cluster around ${filtered_df['LOAN'].median():,.0f}, 
-                    with some larger outliers. Understanding this distribution helps in product pricing and risk assessment.</p>
+                    <p>This chart shows the distribution of loan amounts with a smooth Kernel Density Estimation (KDE) line 
+                    representing the probability density. The KDE curve gives a smoother view of the distribution compared to the histogram.
+                    Most loans cluster around ${filtered_df['LOAN'].median():,.0f}, with some larger outliers. 
+                    Understanding this distribution aids in better product pricing and risk analysis.</p>
                 </div>
                 """, unsafe_allow_html=True)
+
         
         with dist_col2:
             if 'DEBTINC' in filtered_df.columns:
@@ -647,17 +778,33 @@ with tab2:
             </div>
             """, unsafe_allow_html=True)
         
+# Mid-animation
+        st.markdown("---")
+        st.markdown("### 📉 Correlation Insights")
+        st_lottie(chart_anim, height=180)
         # Correlation Heatmap
         st.markdown("### Feature Correlations")
-        if len(filtered_df.select_dtypes(include=np.number).columns) > 1:
-            corr_matrix = filtered_df.select_dtypes(include=np.number).corr()
+
+        # Select only numeric columns
+        numeric_df = filtered_df.select_dtypes(include=np.number)
+
+        if numeric_df.shape[1] > 1:
+            # Compute correlation
+            corr_matrix = numeric_df.corr()
+
+            # Fill NaN correlations with 0 for display purposes
+            corr_matrix_filled = corr_matrix.fillna(0)
+
             fig = px.imshow(
-                corr_matrix,
+                corr_matrix_filled,
+                x=corr_matrix.columns,
+                y=corr_matrix.columns,
                 color_continuous_scale='RdBu',
                 zmin=-1,
                 zmax=1,
                 text_auto=".2f"
             )
+
             fig.update_layout(
                 height=600,
                 xaxis_showgrid=False,
@@ -666,20 +813,28 @@ with tab2:
                 paper_bgcolor=COLOR_SCHEME['background'],
                 font=dict(color=COLOR_SCHEME['text'])
             )
+
             st.plotly_chart(fig, use_container_width=True)
+
+            # Markdown summary
             st.markdown(f"""
             <div style="color:{COLOR_SCHEME['text']};">
-                <p>Correlation matrix showing relationships between numeric features. 
-                Positive values (blue) indicate features that move together, while negative values (red) show inverse relationships. 
-                Strong correlations with the target (BAD) are particularly important for risk modeling.</p>
+                <p>This heatmap displays correlation between numeric features. NaN values are replaced with 0 for clarity. 
+                Use this to detect patterns or multicollinearity among features.</p>
             </div>
             """, unsafe_allow_html=True)
+                
+        
+        
         st.markdown("### Default Rate by Occupation")
         if 'JOB' in filtered_df.columns and 'BAD' in filtered_df.columns:
             job_defaults = filtered_df.groupby('JOB')['BAD'].mean().reset_index()
             fig = px.bar(job_defaults, x='JOB', y='BAD',
                         color='BAD', color_continuous_scale='Viridis')
             st.plotly_chart(fig, use_container_width=True)
+        
+        
+        
          # New: Animated Surface Plot with Performance Optimization
         st.subheader("Risk Surface Analysis")
         if st.button("Start Optimized Animation", key="animate_button"):
@@ -763,10 +918,21 @@ with tab2:
         st.warning("No data available for the selected filters")
 
 # Footer with animation
+# Footer
+st.markdown("---")
+st.markdown("### 🙏 Thank you for using our dashboard!")
+st_lottie(loan_risk_anim, height=250)
+
+# Footer Text
+st.markdown("""
+<div style='text-align: center; color: gray; font-size: 13px;'>
+    Made with 💙 by Ankit Yadav | Powered by Streamlit & Lottie
+</div>
+""", unsafe_allow_html=True)
 st.markdown("""
 <div class="footer">
     <p style="font-size:1rem; font-weight:bold;">"Data is the new oil of the digital economy"</p>
-    <p style="font-size:0.8rem;">© {time.strftime('%Y')} LoanRisk AI | Smart Credit Analytics</p>
-    <img src="https://assets8.lottiefiles.com/packages/lf20_ktwnwv5m.json" width="200" style="margin:0 auto;">
+    <p style="font-size:0.8rem;">© 2025 LoanRisk AI | Smart Credit Analytics</p>
 </div>
 """, unsafe_allow_html=True)
+

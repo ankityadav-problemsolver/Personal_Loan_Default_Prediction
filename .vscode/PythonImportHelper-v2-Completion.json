@@ -1,0 +1,256 @@
+[
+    {
+        "label": "streamlit",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "streamlit",
+        "description": "streamlit",
+        "detail": "streamlit",
+        "documentation": {}
+    },
+    {
+        "label": "joblib",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "joblib",
+        "description": "joblib",
+        "detail": "joblib",
+        "documentation": {}
+    },
+    {
+        "label": "pandas",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pandas",
+        "description": "pandas",
+        "detail": "pandas",
+        "documentation": {}
+    },
+    {
+        "label": "numpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "numpy",
+        "description": "numpy",
+        "detail": "numpy",
+        "documentation": {}
+    },
+    {
+        "label": "shap",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "shap",
+        "description": "shap",
+        "detail": "shap",
+        "documentation": {}
+    },
+    {
+        "label": "plotly.express",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "plotly.express",
+        "description": "plotly.express",
+        "detail": "plotly.express",
+        "documentation": {}
+    },
+    {
+        "label": "plotly.graph_objects",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "plotly.graph_objects",
+        "description": "plotly.graph_objects",
+        "detail": "plotly.graph_objects",
+        "documentation": {}
+    },
+    {
+        "label": "roc_curve",
+        "importPath": "sklearn.metrics",
+        "description": "sklearn.metrics",
+        "isExtraImport": true,
+        "detail": "sklearn.metrics",
+        "documentation": {}
+    },
+    {
+        "label": "auc",
+        "importPath": "sklearn.metrics",
+        "description": "sklearn.metrics",
+        "isExtraImport": true,
+        "detail": "sklearn.metrics",
+        "documentation": {}
+    },
+    {
+        "label": "st_shap",
+        "importPath": "streamlit_shap",
+        "description": "streamlit_shap",
+        "isExtraImport": true,
+        "detail": "streamlit_shap",
+        "documentation": {}
+    },
+    {
+        "label": "time",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "time",
+        "description": "time",
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "strftime",
+        "importPath": "time",
+        "description": "time",
+        "isExtraImport": true,
+        "detail": "time",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "make_subplots",
+        "importPath": "plotly.subplots",
+        "description": "plotly.subplots",
+        "isExtraImport": true,
+        "detail": "plotly.subplots",
+        "documentation": {}
+    },
+    {
+        "label": "gaussian_kde",
+        "importPath": "scipy.stats",
+        "description": "scipy.stats",
+        "isExtraImport": true,
+        "detail": "scipy.stats",
+        "documentation": {}
+    },
+    {
+        "label": "st_lottie",
+        "importPath": "streamlit_lottie",
+        "description": "streamlit_lottie",
+        "isExtraImport": true,
+        "detail": "streamlit_lottie",
+        "documentation": {}
+    },
+    {
+        "label": "requests",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "requests",
+        "description": "requests",
+        "detail": "requests",
+        "documentation": {}
+    },
+    {
+        "label": "load_lottieurl",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def load_lottieurl(url: str):\n    try:\n        r = requests.get(url)\n        if r.status_code == 200:\n            return r.json()\n    except Exception as e:\n        print(f\"Error loading Lottie: {e}\")\n    return None\n# 🎨 Lottie animation URLs (verified & working)\nsidebar_anim = load_lottieurl(\"https://assets2.lottiefiles.com/packages/lf20_t9gkkhz4.json\")",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "load_model",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def load_model():\n    try:\n        model_path = os.path.join('best_model', 'best_model_Random_Forest.pkl')\n        model = joblib.load(model_path)\n        return model\n    except Exception as e:\n        st.error(f\"Error loading model: {str(e)}\")\n        return None\n@st.cache_data(show_spinner=False)\ndef load_data():",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "load_data",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def load_data():\n    try:\n        data_path = os.path.join('notebooks', 'cleaned_loan_predictions.csv')\n        df = pd.read_csv(data_path)\n        # Convert categorical columns to numeric for ROC curve\n        if 'REASON' in df.columns:\n            df['REASON'] = df['REASON'].map({'HomeImp': 0, 'DebtCon': 1})\n        if 'JOB' in df.columns:\n            df['JOB'] = pd.factorize(df['JOB'])[0]\n        return df",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "COLOR_SCHEME",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "COLOR_SCHEME = {\n    'primary': '#636EFA',  # Vibrant blue\n    'secondary': '#EF553B',  # Vibrant red\n    'background': '#121721',  # Dark blue-gray\n    'success': '#00CC96',  # Teal\n    'danger': '#FF6692',  # Pink\n    'warning': '#FECB52',  # Yellow\n    'info': '#AB63FA',  # Purple\n    'text': '#E2E2E2',  # Light gray\n    'light': '#2A3A4E',  # Lighter dark",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "sidebar_anim",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "sidebar_anim = load_lottieurl(\"https://assets2.lottiefiles.com/packages/lf20_t9gkkhz4.json\")\n# main_anim = load_lottieurl(\"https://assets9.lottiefiles.com/packages/lf20_cyuxhbnc.json\")\nmain_anim = load_lottieurl(\"https://assets4.lottiefiles.com/packages/lf20_mjlh3hcy.json\") \nchart_anim = load_lottieurl(\"https://assets10.lottiefiles.com/packages/lf20_UJNc2t.json\")\nfooter_anim = load_lottieurl(\"https://assets1.lottiefiles.com/packages/lf20_jtbfg2nb.json\")\nskills_anim = load_lottieurl(\"https://assets3.lottiefiles.com/private_files/lf30_5ttqpi.json\")\n# 🎯 Sidebar with animation\nwith st.sidebar:\n    st.markdown(\"### 🤖 Smart AI Dashboard\")\n    if sidebar_anim:",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "main_anim",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "main_anim = load_lottieurl(\"https://assets4.lottiefiles.com/packages/lf20_mjlh3hcy.json\") \nchart_anim = load_lottieurl(\"https://assets10.lottiefiles.com/packages/lf20_UJNc2t.json\")\nfooter_anim = load_lottieurl(\"https://assets1.lottiefiles.com/packages/lf20_jtbfg2nb.json\")\nskills_anim = load_lottieurl(\"https://assets3.lottiefiles.com/private_files/lf30_5ttqpi.json\")\n# 🎯 Sidebar with animation\nwith st.sidebar:\n    st.markdown(\"### 🤖 Smart AI Dashboard\")\n    if sidebar_anim:\n        st_lottie(sidebar_anim, height=180)\n    st.markdown(\"Welcome! Use the menu to explore predictions and risk factors.\")",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "chart_anim",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "chart_anim = load_lottieurl(\"https://assets10.lottiefiles.com/packages/lf20_UJNc2t.json\")\nfooter_anim = load_lottieurl(\"https://assets1.lottiefiles.com/packages/lf20_jtbfg2nb.json\")\nskills_anim = load_lottieurl(\"https://assets3.lottiefiles.com/private_files/lf30_5ttqpi.json\")\n# 🎯 Sidebar with animation\nwith st.sidebar:\n    st.markdown(\"### 🤖 Smart AI Dashboard\")\n    if sidebar_anim:\n        st_lottie(sidebar_anim, height=180)\n    st.markdown(\"Welcome! Use the menu to explore predictions and risk factors.\")\n# 🎯 Header",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "footer_anim",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "footer_anim = load_lottieurl(\"https://assets1.lottiefiles.com/packages/lf20_jtbfg2nb.json\")\nskills_anim = load_lottieurl(\"https://assets3.lottiefiles.com/private_files/lf30_5ttqpi.json\")\n# 🎯 Sidebar with animation\nwith st.sidebar:\n    st.markdown(\"### 🤖 Smart AI Dashboard\")\n    if sidebar_anim:\n        st_lottie(sidebar_anim, height=180)\n    st.markdown(\"Welcome! Use the menu to explore predictions and risk factors.\")\n# 🎯 Header\nst.markdown(\"## 📊 Loan Risk Prediction AI Dashboard\")",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "skills_anim",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "skills_anim = load_lottieurl(\"https://assets3.lottiefiles.com/private_files/lf30_5ttqpi.json\")\n# 🎯 Sidebar with animation\nwith st.sidebar:\n    st.markdown(\"### 🤖 Smart AI Dashboard\")\n    if sidebar_anim:\n        st_lottie(sidebar_anim, height=180)\n    st.markdown(\"Welcome! Use the menu to explore predictions and risk factors.\")\n# 🎯 Header\nst.markdown(\"## 📊 Loan Risk Prediction AI Dashboard\")\nst.markdown(\"\"\"",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "chart_anim",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "chart_anim = load_lottieurl(\"https://assets2.lottiefiles.com/packages/lf20_49rdyysj.json\")          # Graphs interaction        # Thank you # Project showreel\nloan_risk_anim = load_lottieurl(\"https://assets4.lottiefiles.com/packages/lf20_kyu7xb1v.json\")\n# Premium Custom CSS with Dark Theme\nst.markdown(f\"\"\"\n<style>\n    /* Base Styles */\n    .main {{\n        background: {COLOR_SCHEME['background']};\n        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        color: {COLOR_SCHEME['text']};",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "loan_risk_anim",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "loan_risk_anim = load_lottieurl(\"https://assets4.lottiefiles.com/packages/lf20_kyu7xb1v.json\")\n# Premium Custom CSS with Dark Theme\nst.markdown(f\"\"\"\n<style>\n    /* Base Styles */\n    .main {{\n        background: {COLOR_SCHEME['background']};\n        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        color: {COLOR_SCHEME['text']};\n    }}",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "filtered_df",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "filtered_df = df.copy()\nif job_filter and 'JOB' in df.columns:\n    filtered_df = filtered_df[filtered_df['JOB'].isin(job_filter)]\nif reason_filter and 'REASON' in df.columns:\n    filtered_df = filtered_df[filtered_df['REASON'].isin(reason_filter)]\n# Create tabs with custom styling\ntab1, tab2 = st.tabs([\"🔍 Risk Assessment\", \"📊 Data Insights\"])\n# Risk Assessment Tab\nwith tab1:\n    st.markdown(f\"\"\"",
+        "detail": "main",
+        "documentation": {}
+    }
+]
