@@ -306,37 +306,55 @@ with tab1:
     """, unsafe_allow_html=True)
     
     # Prediction Form
+    # Prediction Form
     with st.form("loan_appraisal"):
         col1, col2 = st.columns(2)
+        
         with col1:
-            st.markdown(f"#### <span style='color:{COLOR_SCHEME['primary']}'>Borrower Information</span>", unsafe_allow_html=True)
-            loan = st.number_input("Loan Amount (USD)", 1000, 1000000, 5000, 
-                                 help="The amount of money requested by the borrower")
-            value = st.number_input("Property Value (USD)", 10000, 2000000, 250000,
-                                  help="Current market value of the property")
-            mortdue = st.number_input("Existing Mortgage (USD)", 0, 1000000, 100000,
-                                    help="Outstanding mortgage balance on the property")
-            debtinc = st.slider("Debt-to-Income Ratio (%)", 0.0, 100.0, 35.0, 0.5,
-                              help="Monthly debt payments divided by gross monthly income")
-            
+            st.markdown(f"#### <span style='color:{COLOR_SCHEME['primary']}'>🏦 Borrower Information</span>", unsafe_allow_html=True)
+
+            loan = st.number_input("💰 Loan Amount (USD) *", 1000, 1000000, 5000,
+                                help="Total loan amount requested by the borrower.")
+            value = st.number_input("🏠 Property Value (USD) *", 10000, 2000000, 250000,
+                                    help="Market value of the property used as collateral.")
+            mortdue = st.number_input("📉 Existing Mortgage (USD)", 0, 1000000, 100000,
+                                    help="Outstanding balance on any existing mortgages.")
+            debtinc = st.slider("⚖️ Debt-to-Income Ratio (%) *", 0.0, 100.0, 35.0, 0.5,
+                                help="A high ratio indicates higher financial risk.")
+
         with col2:
-            st.markdown(f"#### <span style='color:{COLOR_SCHEME['secondary']}'>Credit History</span>", unsafe_allow_html=True)
-            yoj = st.slider("Years at Current Job", 0, 40, 5,
-                          help="Duration of employment with current employer")
-            derog = st.number_input("Derogatory Reports", 0, 10, 0,
-                                  help="Number of major derogatory reports")
-            delinq = st.number_input("Delinquent Accounts", 0, 10, 0,
-                                   help="Number of delinquent credit lines")
-            clage = st.number_input("Oldest Credit Line (Months)", 0, 500, 120,
-                                  help="Age of oldest credit line in months")
-            ninq = st.number_input("Recent Credit Inquiries", 0, 10, 0,
-                                 help="Number of recent credit inquiries")
-            
-        submitted = st.form_submit_button("Assess Risk", type="primary")
-    
+            st.markdown(f"#### <span style='color:{COLOR_SCHEME['secondary']}'>📋 Credit History</span>", unsafe_allow_html=True)
+
+            yoj = st.slider("🧑‍💼 Years at Current Job", 0, 40, 5,
+                            help="Stability of employment, relevant to creditworthiness.")
+            derog = st.number_input("❗ Derogatory Reports *", 0, 10, 0,
+                                    help="Any serious negative credit reports. Affects risk significantly.")
+            delinq = st.number_input("⚠️ Delinquent Accounts", 0, 10, 0,
+                                    help="Number of accounts overdue or in collections.")
+            clage = st.number_input("📆 Oldest Credit Line (Months)", 0, 500, 120,
+                                    help="Age of the oldest credit line (longer is usually better).")
+            ninq = st.number_input("🔍 Recent Credit Inquiries", 0, 10, 0,
+                                help="Too many inquiries may lower credit scores.")
+
+        st.markdown("#### 📌 Additional Information")
+        reason = st.selectbox("🎯 Loan Purpose (REASON) *", ['DebtCon', 'HomeImp'],
+                            help="Reason for loan: 'DebtCon' = debt consolidation, 'HomeImp' = home improvement.")
+        job = st.selectbox("🧑 Employment Type (JOB) *", ['Other', 'Mgr', 'Office', 'Sales', 'ProfExe', 'Self'],
+                        help="Job category affects financial stability prediction.")
+
+        submitted = st.form_submit_button("🔍 Assess Risk", type="primary")
+
+    # Optional Tip Box for User
+    st.markdown(f"""
+    <div style="padding:1rem; background-color:{COLOR_SCHEME['card']}; border-left: 5px solid {COLOR_SCHEME['primary']}; color:{COLOR_SCHEME['text']};">
+    <b>🧠 Tip:</b> Fields marked with <span style="color:red">*</span> are critical to your credit risk assessment. 
+    Focus especially on <b>Loan Amount</b>, <b>Debt-to-Income Ratio</b>, and <b>Derogatory Reports</b> as they significantly influence the model's classification.
+    </div>
+    """, unsafe_allow_html=True)
+
     if submitted and model is not None:
         try:
-            # Validate inputs
+            # Input validation
             if value <= 0:
                 st.warning("Property value must be positive")
             if loan <= 0:
@@ -345,8 +363,8 @@ with tab1:
                 st.warning("Mortgage balance cannot be negative")
             if debtinc < 0 or debtinc > 100:
                 st.warning("Debt-to-income ratio must be between 0-100%")
-            
-            # Create input DataFrame
+
+            # Prepare input data
             input_data = {
                 'LOAN': loan,
                 'VALUE': value,
@@ -357,21 +375,52 @@ with tab1:
                 'DELINQ': delinq,
                 'CLAGE': clage,
                 'NINQ': ninq,
-                'REASON': 'DebtCon',  # Default value
-                'JOB': 'Other'       # Default value
+                'CLNO': 20,
+                'REASON': reason,
+                'JOB': job
             }
-            
+
             input_df = pd.DataFrame([input_data])
-            
-            # Feature engineering to match model training
+
+            # Feature Engineering
             input_df['LOAN_TO_VALUE'] = input_df['LOAN'] / input_df['VALUE']
             input_df['DEBT_TO_INCOME'] = input_df['DEBTINC']
-            
-            # Make prediction
+            input_df['LOAN_TO_MORTDUE'] = input_df['LOAN'] / (input_df['MORTDUE'] + 1)
+            input_df['DEROG_DELINQ_SUM'] = input_df['DEROG'] + input_df['DELINQ']
+            input_df['CLAGE_PER_CLNO'] = input_df['CLAGE'] / (input_df['CLNO'] + 1)
+
+            # EMI calculation
+            monthly_rate = 0.07 / 12
+            loan_term = 60
+            input_df['EMI'] = (input_df['LOAN'] * monthly_rate * (1 + monthly_rate)**loan_term) / \
+                            ((1 + monthly_rate)**loan_term - 1)
+
+            # Binning
+            input_df['YOJ_BINNED'] = pd.cut(input_df['YOJ'], 
+                                            bins=[-1, 2, 5, 10, 20, 40], 
+                                            labels=['0-2', '2-5', '5-10', '10-20', '20+'])
+            input_df['CLAGE_BINNED'] = pd.cut(input_df['CLAGE'], 
+                                            bins=[-1, 60, 120, 180, 240, 500], 
+                                            labels=['0-5', '5-10', '10-15', '15-20', '20+'])
+
+            # Encoding
+            input_df['REASON'] = input_df['REASON'].map({'HomeImp': 0, 'DebtCon': 1})
+            input_df['JOB'] = pd.factorize(input_df['JOB'])[0]
+            input_df['YOJ_BINNED'] = pd.factorize(input_df['YOJ_BINNED'])[0]
+            input_df['CLAGE_BINNED'] = pd.factorize(input_df['CLAGE_BINNED'])[0]
+
+            # Align with model features
+            if hasattr(model, 'feature_names_in_'):
+                missing = set(model.feature_names_in_) - set(input_df.columns)
+                for m in missing:
+                    input_df[m] = 0
+                input_df = input_df[model.feature_names_in_]
+
+            # Prediction
             prediction = model.predict(input_df)[0]
             probability = model.predict_proba(input_df)[0][1]
-            
-            # Display results
+
+            # Result Display
             if prediction == 1:
                 st.markdown(f"""
                 <div class="highlight-box">
@@ -388,24 +437,13 @@ with tab1:
                     <p>This application meets our credit standards.</p>
                 </div>
                 """, unsafe_allow_html=True)
-            
+
             # SHAP Explanation
-            try:
-                explainer = shap.TreeExplainer(model)
-                shap_values = explainer.shap_values(input_df)
-                st.markdown("#### Risk Factor Analysis")
-                st_shap(shap.force_plot(
-                    explainer.expected_value, 
-                    shap_values, 
-                    input_df,
-                    plot_cmap=[COLOR_SCHEME['success'], COLOR_SCHEME['danger']]
-                ))
-            except Exception as e:
-                st.warning(f"Could not generate SHAP explanation: {str(e)}")
-        
+            
+
         except Exception as e:
             st.error(f"Error during prediction: {str(e)}")
-    
+        
     # Model Insights Section
     if model is not None:
         st.markdown("---")

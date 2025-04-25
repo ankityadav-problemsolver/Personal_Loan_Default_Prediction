@@ -1,0 +1,19 @@
+{
+    "model_name": "Random Forest",
+    "version": "20250425_232905",
+    "creation_date": "2025-04-25 23:29:05",
+    "performance_metrics": {
+        "Model": "Random Forest",
+        "Best Params": {
+            "max_depth": null,
+            "min_samples_split": 2,
+            "n_estimators": 200
+        },
+        "Accuracy": 0.9077181208053692,
+        "Precision": 0.7909090909090909,
+        "Recall": 0.7310924369747899,
+        "F1 Score": 0.759825327510917,
+        "AUC": 0.9536151287908593
+    },
+    "model_path": "../best_model/best_model_Random_Forest_20250425_232905.pkl"
+}
