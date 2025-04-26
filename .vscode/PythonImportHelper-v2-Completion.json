@@ -119,14 +119,6 @@
         "documentation": {}
     },
     {
-        "label": "st_shap",
-        "importPath": "streamlit_shap",
-        "description": "streamlit_shap",
-        "isExtraImport": true,
-        "detail": "streamlit_shap",
-        "documentation": {}
-    },
-    {
         "label": "time",
         "kind": 6,
         "isExtraImport": true,
