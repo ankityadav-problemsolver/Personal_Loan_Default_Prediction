@@ -14,8 +14,14 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import numpy as np
 from scipy.stats import gaussian_kde
-
-
+from model_metrics import (
+    engineer_features,
+    align_features,
+    plot_roc,
+    plot_precision_recall,
+    plot_confusion_matrix,
+    generate_classification_report
+)
 
 # Configuration
 st.set_page_config(
@@ -226,8 +232,9 @@ st.markdown(f"""
     .highlight-box {{
         padding: 20px;
         border-radius: 10px;
+        color:black !important;
         margin: 20px 0;
-        background: linear-gradient(135deg, {COLOR_SCHEME['light']}, {COLOR_SCHEME['white']});
+
         border-left: 5px solid {COLOR_SCHEME['highlight']};
     }}
     
@@ -376,25 +383,7 @@ with st.spinner('Initializing application...'):
     if not df.empty:
         st.toast("Data successfully refreshed", icon="🔄")
 
-# # Status display
-# if model and metadata:
-#     st.sidebar.subheader("Model Information")
-#     st.sidebar.write(f"**Name:** {metadata.get('model_name', 'N/A')}")
-#     st.sidebar.write(f"**Version:** {metadata.get('version', 'N/A')}")
-#     st.sidebar.write(f"**Created:** {metadata.get('creation_date', 'N/A')}")
-    
-#     st.sidebar.subheader("Performance Metrics")
-#     metrics = metadata.get('performance_metrics', {})
-#     st.sidebar.metric("Accuracy", f"{metrics.get('Accuracy', 0):.2%}")
-#     st.sidebar.metric("Precision", f"{metrics.get('Precision', 0):.2%}")
-#     st.sidebar.metric("Recall", f"{metrics.get('Recall', 0):.2%}")
-#     st.sidebar.metric("F1 Score", f"{metrics.get('F1 Score', 0):.2%}")
-#     st.sidebar.metric("AUC", f"{metrics.get('AUC', 0):.2f}")
-    
-# if not df.empty and data_status:
-#     st.caption(f"Data Updated: {datetime.fromtimestamp(data_status).strftime('%Y-%m-%d %H:%M:%S')}") 
-# Add custom CSS for theme adaptation
-# Add custom CSS for modern theme
+
 
 # Custom CSS for cohesive visual design
 st.markdown("""
@@ -659,6 +648,7 @@ with tab1:
                     <p>This application shows significant risk factors based on our analysis.</p>
                 </div>
                 """, unsafe_allow_html=True)
+                
             else:
                 st.markdown(f"""
                 <div class="highlight-box">
@@ -667,165 +657,220 @@ with tab1:
                     <p>This application meets our credit standards.</p>
                 </div>
                 """, unsafe_allow_html=True)
-
             # SHAP Explanation
             
 
         except Exception as e:
             st.error(f"Error during prediction: {str(e)}")
         
-    # Model Insights Section
+    # # Model Insights Section
+    # if model is not None:
+    #     st.markdown("---")
+    #     st.markdown("## Model Performance Analytics")
+        
+    #     # ROC Curve with proper data handling
+    #     if 'BAD' in df.columns:
+    #         try:
+    #             with st.spinner('Calculating model performance metrics...'):
+    #                 X = df.drop('BAD', axis=1)
+    #                 y = df['BAD']
+                    
+    #                 # Align columns with model's expected features
+    #                 if hasattr(model, 'feature_names_in_'):
+    #                     available_features = [col for col in model.feature_names_in_ if col in X.columns]
+    #                     X = X[available_features]
+                        
+    #                     # Add missing features with default values
+    #                     missing_features = set(model.feature_names_in_) - set(X.columns)
+    #                     for feature in missing_features:
+    #                         X[feature] = 0
+                        
+    #                     # Reorder columns to match model expectations
+    #                     X = X[model.feature_names_in_]
+                    
+    #                 probas = model.predict_proba(X)[:, 1]
+    #                 fpr, tpr, thresholds = roc_curve(y, probas)
+    #                 roc_auc = auc(fpr, tpr)
+                    
+    #                 with st.container():
+    #                     st.markdown("#### Model Discrimination Ability (ROC Curve)")
+    #                     fig = go.Figure()
+    #                     fig.add_trace(go.Scatter(
+    #                         x=fpr, y=tpr,
+    #                         mode='lines',
+    #                         line=dict(color=COLOR_SCHEME['primary'], width=3),
+    #                         name=f'ROC Curve (AUC = {roc_auc:.2f})'
+    #                     ))
+    #                     fig.add_trace(go.Scatter(
+    #                         x=[0, 1], y=[0, 1],
+    #                         mode='lines',
+    #                         line=dict(color=COLOR_SCHEME['danger'], dash='dash'),
+    #                         name='Random Guessing'
+    #                     ))
+    #                     fig.update_layout(
+    #                         xaxis_title='False Positive Rate',
+    #                         yaxis_title='True Positive Rate',
+    #                         height=500,
+    #                         plot_bgcolor=COLOR_SCHEME['card'],
+    #                         paper_bgcolor=COLOR_SCHEME['background'],
+    #                         font=dict(color=COLOR_SCHEME['text']),
+    #                         margin=dict(l=50, r=50, b=50, t=50),
+    #                         legend=dict(
+    #                             orientation="h",
+    #                             yanchor="bottom",
+    #                             y=1.02,
+    #                             xanchor="right",
+    #                             x=1
+    #                         )
+    #                     )
+    #                     st.plotly_chart(fig, use_container_width=True)
+    #                     st.markdown(f"""
+    #                     <div style="color:{COLOR_SCHEME['text']};">
+    #                         <p>The ROC curve shows the trade-off between true positive rate (sensitivity) and false positive rate (1-specificity). 
+    #                         Our model achieves an AUC of <strong>{roc_auc:.2f}</strong>, indicating good discrimination ability. 
+    #                         An AUC of 1.0 represents perfect prediction, while 0.5 represents random guessing.</p>
+    #                     </div>
+    #                     """, unsafe_allow_html=True)
+    #         except Exception as e:
+    #             st.error(f"Error generating ROC curve: {str(e)}")
+    
+    
+
+
+
+    # Assuming COLOR_SCHEME and df, model are already defined
     if model is not None:
         st.markdown("---")
         st.markdown("## Model Performance Analytics")
-        
-        # ROC Curve with proper data handling
+
         if 'BAD' in df.columns:
             try:
                 with st.spinner('Calculating model performance metrics...'):
-                    X = df.drop('BAD', axis=1)
-                    y = df['BAD']
-                    
-                    # Align columns with model's expected features
-                    if hasattr(model, 'feature_names_in_'):
-                        available_features = [col for col in model.feature_names_in_ if col in X.columns]
-                        X = X[available_features]
-                        
-                        # Add missing features with default values
-                        missing_features = set(model.feature_names_in_) - set(X.columns)
-                        for feature in missing_features:
-                            X[feature] = 0
-                        
-                        # Reorder columns to match model expectations
-                        X = X[model.feature_names_in_]
-                    
-                    probas = model.predict_proba(X)[:, 1]
-                    fpr, tpr, thresholds = roc_curve(y, probas)
-                    roc_auc = auc(fpr, tpr)
-                    
-                    with st.container():
-                        st.markdown("#### Model Discrimination Ability (ROC Curve)")
-                        fig = go.Figure()
-                        fig.add_trace(go.Scatter(
-                            x=fpr, y=tpr,
-                            mode='lines',
-                            line=dict(color=COLOR_SCHEME['primary'], width=3),
-                            name=f'ROC Curve (AUC = {roc_auc:.2f})'
-                        ))
-                        fig.add_trace(go.Scatter(
-                            x=[0, 1], y=[0, 1],
-                            mode='lines',
-                            line=dict(color=COLOR_SCHEME['danger'], dash='dash'),
-                            name='Random Guessing'
-                        ))
-                        fig.update_layout(
-                            xaxis_title='False Positive Rate',
-                            yaxis_title='True Positive Rate',
-                            height=500,
-                            plot_bgcolor=COLOR_SCHEME['card'],
-                            paper_bgcolor=COLOR_SCHEME['background'],
-                            font=dict(color=COLOR_SCHEME['text']),
-                            margin=dict(l=50, r=50, b=50, t=50),
-                            legend=dict(
-                                orientation="h",
-                                yanchor="bottom",
-                                y=1.02,
-                                xanchor="right",
-                                x=1
-                            )
-                        )
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.markdown(f"""
+                    # --- Feature Engineering ---
+                    input_df = engineer_features(df)
+
+                    # --- Prepare Input Data ---
+                    X = input_df.drop('BAD', axis=1)
+                    y = input_df['BAD']
+
+                    # --- Align with model's expected input ---
+                    X = align_features(X, model)
+
+                    # --- Predict Probabilities and Labels ---
+                    y_proba = model.predict_proba(X)[:, 1]
+                    y_pred = model.predict(X)
+
+                    # --- ROC Curve ---
+                    roc_fig, auc_val = plot_roc(y, y_proba, COLOR_SCHEME)
+                    st.markdown("### ROC Curve")
+                    st.plotly_chart(roc_fig, use_container_width=True)
+                    st.markdown(f"""
                         <div style="color:{COLOR_SCHEME['text']};">
                             <p>The ROC curve shows the trade-off between true positive rate (sensitivity) and false positive rate (1-specificity). 
-                            Our model achieves an AUC of <strong>{roc_auc:.2f}</strong>, indicating good discrimination ability. 
-                            An AUC of 1.0 represents perfect prediction, while 0.5 represents random guessing.</p>
+                            Our model achieves an AUC of <strong>{auc_val:.2f}</strong>.</p>
                         </div>
-                        """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Error generating ROC curve: {str(e)}")
-        
-        # Feature Importance with proper handling
-        # Feature mapping dictionary - replace with your actual feature names
-    FEATURE_MAPPING = {
-        'Feature 0': 'Loan Amount',
-        'Feature 1': 'Credit Score',
-        'Feature 2': 'Debt-to-Income Ratio',
-        'Feature 4': 'Employment Length',
-        'Feature 5': 'Annual Income',
-        'Feature 8': 'Loan Purpose',
-        'Feature 9': 'Years at Current Address',
-        'Feature 10': 'Number of Open Accounts',
-        'Feature 11': 'Number of Credit Problems',
-        'Feature 12': 'Current Credit Balance',
-        'Feature 13': 'Maximum Open Credit',
-        'Feature 14': 'Bankruptcies',
-        'Feature 15': 'Tax Liens',
-        'Feature 17': 'Number of Late Payments (30-59 days)',
-        'Feature 18': 'Number of Late Payments (60-89 days)'
-    }
+                    """, unsafe_allow_html=True)
 
-    # Feature Importance with proper names
-    if hasattr(model, 'feature_importances_'):
-        try:
-            with st.container():
-                st.markdown("#### Key Risk Drivers (Feature Importance)")
-                
-                # Get features and importances
-                if hasattr(model, 'feature_names_in_'):
-                    features = model.feature_names_in_
-                    importances = model.feature_importances_
-                else:
-                    features = [f"Feature {i}" for i in range(len(model.feature_importances_))]
-                    importances = model.feature_importances_
-                
-                # Map feature numbers to proper names
-                named_features = [FEATURE_MAPPING.get(f, f) for f in features]
-                
-                # Create DataFrame and sort
-                feat_imp = pd.DataFrame({
-                    'Feature': named_features,
-                    'Importance': importances,
-                    'Original_Feature': features  # Keep original for reference
-                }).sort_values('Importance', ascending=True)
-                
-                # Create horizontal bar chart
-                fig = px.bar(
-                    feat_imp.tail(15),  # Show top 15 features
-                    x='Importance',
-                    y='Feature',
-                    orientation='h',
-                    color='Importance',
-                    color_continuous_scale='Viridis',
-                    title='',
-                    hover_data=['Original_Feature']  # Show original feature number in tooltip
-                )
-                
-                fig.update_layout(
-                    height=500,
-                    yaxis={'categoryorder':'total ascending'},
-                    margin=dict(l=100, r=50, b=50, t=50),
-                    plot_bgcolor=COLOR_SCHEME['card'],
-                    paper_bgcolor=COLOR_SCHEME['background'],
-                    font=dict(color=COLOR_SCHEME['text']),
-                    coloraxis_colorbar=dict(
-                        title='Importance',
-                        tickfont=dict(color=COLOR_SCHEME['text']))
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
-                
-                st.markdown(f"""
-                <div style="color:{COLOR_SCHEME['text']};">
-                    <p>This chart shows which factors most influence the model's risk assessment. 
-                    Higher values indicate features that contribute more to predicting loan defaults. 
-                    Understanding these drivers helps in making informed lending decisions and explaining model behavior.</p>
-                    <p><small>Hover over bars to see the original feature numbers</small></p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-        except Exception as e:
-            st.error(f"Error generating feature importance: {str(e)}")
+                    # --- Precision-Recall Curve ---
+                    st.markdown("### Precision-Recall Curve")
+                    pr_fig = plot_precision_recall(y, y_proba, COLOR_SCHEME)
+                    st.plotly_chart(pr_fig, use_container_width=True)
+
+                    # --- Confusion Matrix ---
+                    st.markdown("### Confusion Matrix")
+                    cm_fig = plot_confusion_matrix(y, y_pred, COLOR_SCHEME)
+                    st.plotly_chart(cm_fig, use_container_width=True)
+
+                    # --- Classification Report ---
+                    st.markdown("### Classification Report")
+                    report = generate_classification_report(y, y_pred)
+                    st.text(report)
+
+            except Exception as e:
+                st.error(f"Error generating performance metrics: {e}")
+            
+            
+            # Feature Importance with proper handling
+            # Feature mapping dictionary - replace with your actual feature names
+        FEATURE_MAPPING = {
+            'Feature 0': 'Loan Amount',
+            'Feature 1': 'Credit Score',
+            'Feature 2': 'Debt-to-Income Ratio',
+            'Feature 4': 'Employment Length',
+            'Feature 5': 'Annual Income',
+            'Feature 8': 'Loan Purpose',
+            'Feature 9': 'Years at Current Address',
+            'Feature 10': 'Number of Open Accounts',
+            'Feature 11': 'Number of Credit Problems',
+            'Feature 12': 'Current Credit Balance',
+            'Feature 13': 'Maximum Open Credit',
+            'Feature 14': 'Bankruptcies',
+            'Feature 15': 'Tax Liens',
+            'Feature 17': 'Number of Late Payments (30-59 days)',
+            'Feature 18': 'Number of Late Payments (60-89 days)'
+        }
+
+        # Feature Importance with proper names
+        if hasattr(model, 'feature_importances_'):
+            try:
+                with st.container():
+                    st.markdown("#### Key Risk Drivers (Feature Importance)")
+                    
+                    # Get features and importances
+                    if hasattr(model, 'feature_names_in_'):
+                        features = model.feature_names_in_
+                        importances = model.feature_importances_
+                    else:
+                        features = [f"Feature {i}" for i in range(len(model.feature_importances_))]
+                        importances = model.feature_importances_
+                    
+                    # Map feature numbers to proper names
+                    named_features = [FEATURE_MAPPING.get(f, f) for f in features]
+                    
+                    # Create DataFrame and sort
+                    feat_imp = pd.DataFrame({
+                        'Feature': named_features,
+                        'Importance': importances,
+                        'Original_Feature': features  # Keep original for reference
+                    }).sort_values('Importance', ascending=True)
+                    
+                    # Create horizontal bar chart
+                    fig = px.bar(
+                        feat_imp.tail(15),  # Show top 15 features
+                        x='Importance',
+                        y='Feature',
+                        orientation='h',
+                        color='Importance',
+                        color_continuous_scale='Viridis',
+                        title='',
+                        hover_data=['Original_Feature']  # Show original feature number in tooltip
+                    )
+                    
+                    fig.update_layout(
+                        height=500,
+                        yaxis={'categoryorder':'total ascending'},
+                        margin=dict(l=100, r=50, b=50, t=50),
+                        plot_bgcolor=COLOR_SCHEME['card'],
+                        paper_bgcolor=COLOR_SCHEME['background'],
+                        font=dict(color=COLOR_SCHEME['text']),
+                        coloraxis_colorbar=dict(
+                            title='Importance',
+                            tickfont=dict(color=COLOR_SCHEME['text']))
+                    )
+                    
+                    st.plotly_chart(fig, use_container_width=True)
+                    
+                    st.markdown(f"""
+                    <div style="color:{COLOR_SCHEME['text']};">
+                        <p>This chart shows which factors most influence the model's risk assessment. 
+                        Higher values indicate features that contribute more to predicting loan defaults. 
+                        Understanding these drivers helps in making informed lending decisions and explaining model behavior.</p>
+                        <p><small>Hover over bars to see the original feature numbers</small></p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+            except Exception as e:
+                st.error(f"Error generating feature importance: {str(e)}")
 
 # Data Analytics Tab
 with tab2:

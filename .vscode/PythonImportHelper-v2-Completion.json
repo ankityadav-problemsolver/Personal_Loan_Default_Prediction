@@ -79,6 +79,46 @@
         "documentation": {}
     },
     {
+        "label": "roc_curve",
+        "importPath": "sklearn.metrics",
+        "description": "sklearn.metrics",
+        "isExtraImport": true,
+        "detail": "sklearn.metrics",
+        "documentation": {}
+    },
+    {
+        "label": "auc",
+        "importPath": "sklearn.metrics",
+        "description": "sklearn.metrics",
+        "isExtraImport": true,
+        "detail": "sklearn.metrics",
+        "documentation": {}
+    },
+    {
+        "label": "precision_recall_curve",
+        "importPath": "sklearn.metrics",
+        "description": "sklearn.metrics",
+        "isExtraImport": true,
+        "detail": "sklearn.metrics",
+        "documentation": {}
+    },
+    {
+        "label": "confusion_matrix",
+        "importPath": "sklearn.metrics",
+        "description": "sklearn.metrics",
+        "isExtraImport": true,
+        "detail": "sklearn.metrics",
+        "documentation": {}
+    },
+    {
+        "label": "classification_report",
+        "importPath": "sklearn.metrics",
+        "description": "sklearn.metrics",
+        "isExtraImport": true,
+        "detail": "sklearn.metrics",
+        "documentation": {}
+    },
+    {
         "label": "st_shap",
         "importPath": "streamlit_shap",
         "description": "streamlit_shap",
@@ -129,6 +169,54 @@
         "documentation": {}
     },
     {
+        "label": "engineer_features",
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "isExtraImport": true,
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "align_features",
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "isExtraImport": true,
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "plot_roc",
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "isExtraImport": true,
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "plot_precision_recall",
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "isExtraImport": true,
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "plot_confusion_matrix",
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "isExtraImport": true,
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "generate_classification_report",
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "isExtraImport": true,
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
         "label": "st_lottie",
         "importPath": "streamlit_lottie",
         "description": "streamlit_lottie",
@@ -160,6 +248,15 @@
         "description": "datetime",
         "isExtraImport": true,
         "detail": "datetime",
+        "documentation": {}
+    },
+    {
+        "label": "plotly.graph_objs",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "plotly.graph_objs",
+        "description": "plotly.graph_objs",
+        "detail": "plotly.graph_objs",
         "documentation": {}
     },
     {
@@ -322,6 +419,60 @@
         "description": "main",
         "peekOfCode": "filtered_df = df.copy()\nif job_filter and 'JOB' in df.columns:\n    filtered_df = filtered_df[filtered_df['JOB'].isin(job_filter)]\nif reason_filter and 'REASON' in df.columns:\n    filtered_df = filtered_df[filtered_df['REASON'].isin(reason_filter)]\n# Create tabs with custom styling\ntab1, tab2 = st.tabs([\"🔍 Risk Assessment\", \"📊 Data Insights\"])\n# Risk Assessment Tab\nwith tab1:\n    st.markdown(f\"\"\"",
         "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "engineer_features",
+        "kind": 2,
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "peekOfCode": "def engineer_features(df, monthly_rate=0.01, loan_term=12):\n    df = df.copy()\n    # Original feature creation\n    df['EMI'] = (df['LOAN'] * monthly_rate * (1 + monthly_rate)**loan_term) / ((1 + monthly_rate)**loan_term - 1)\n    # Binned features\n    df['YOJ_BINNED'] = pd.cut(df['YOJ'], \n                              bins=[-1, 2, 5, 10, 20, 40], \n                              labels=['0-2', '2-5', '5-10', '10-20', '20+'])\n    df['CLAGE_BINNED'] = pd.cut(df['CLAGE'], \n                                bins=[-1, 60, 120, 180, 240, 500], ",
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "align_features",
+        "kind": 2,
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "peekOfCode": "def align_features(X, model):\n    if hasattr(model, 'feature_names_in_'):\n        expected = model.feature_names_in_\n        missing = set(expected) - set(X.columns)\n        for col in missing:\n            X[col] = 0\n        X = X[expected]\n    return X\n# --- ROC Curve ---\ndef plot_roc(y_true, y_proba, color_scheme):",
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "plot_roc",
+        "kind": 2,
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "peekOfCode": "def plot_roc(y_true, y_proba, color_scheme):\n    fpr, tpr, _ = roc_curve(y_true, y_proba)\n    auc_score = auc(fpr, tpr)\n    fig = go.Figure()\n    fig.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines',\n                             name=f'ROC Curve (AUC = {auc_score:.2f})',\n                             line=dict(color=color_scheme['primary'], width=3)))\n    fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines',\n                             name='Random Guessing',\n                             line=dict(color=color_scheme['danger'], dash='dash')))",
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "plot_precision_recall",
+        "kind": 2,
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "peekOfCode": "def plot_precision_recall(y_true, y_proba, color_scheme):\n    precision, recall, _ = precision_recall_curve(y_true, y_proba)\n    fig = go.Figure()\n    fig.add_trace(go.Scatter(x=recall, y=precision, mode='lines',\n                             name='Precision-Recall Curve',\n                             line=dict(color=color_scheme['success'], width=3)))\n    fig.update_layout(\n        xaxis_title='Recall',\n        yaxis_title='Precision',\n        plot_bgcolor=color_scheme['card'],",
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "plot_confusion_matrix",
+        "kind": 2,
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "peekOfCode": "def plot_confusion_matrix(y_true, y_pred, color_scheme):\n    cm = confusion_matrix(y_true, y_pred)\n    fig = go.Figure(data=go.Heatmap(\n        z=cm,\n        x=['Predicted 0', 'Predicted 1'],\n        y=['Actual 0', 'Actual 1'],\n        colorscale='cividis',  # Updated to 'crest' colorscale\n        showscale=True\n    ))\n    fig.update_layout(",
+        "detail": "model_metrics",
+        "documentation": {}
+    },
+    {
+        "label": "generate_classification_report",
+        "kind": 2,
+        "importPath": "model_metrics",
+        "description": "model_metrics",
+        "peekOfCode": "def generate_classification_report(y_true, y_pred):\n    report = classification_report(y_true, y_pred, output_dict=False)\n    return report",
+        "detail": "model_metrics",
         "documentation": {}
     }
 ]
