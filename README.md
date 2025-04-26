@@ -4,7 +4,7 @@
 
 ---
 
-![Animated Header](assets/screenshots/header_animation.gif)
+![Animated Header](assets/header.png)
 
 ---
 
@@ -27,30 +27,17 @@ Financial institutions face increasing challenges in accurately identifying appl
 
 ```mermaid
 graph TD
-A[User Input Form] --> B[Data Preprocessing]
-B --> C[Prediction Engine (ML Model)]
-C --> D[Risk Score + Approval Decision]
-D --> E[Explainability + Export Report]
+    A[User Inputs Loan Details via Form] --> B[Data Preprocessing]
+    B[Data Preprocessing] -->C[ML model]
+    C[ML model] -->E[Predict] 
+    E[Predict] --> F[Recommendation]
 ```
 
 ---
 
 ## 📂 Folder Structure
 
-```
-📆 personal-loan-prediction
-├── app.py                    # Main Streamlit app
-├── model/
-│   └── model.pkl             # Trained ML model
-├── data/
-│   └── sample_data.csv       # Sample training data
-├── utils/
-│   └── preprocessing.py      # Preprocessing functions
-├── assets/
-│   └── screenshots/          # UI screenshots & animations
-├── requirements.txt          # Dependencies
-├── README.md                 # Project documentation
-```
+![Folder Structure](assets/folder_structure.png)
 
 ---
 
@@ -89,16 +76,28 @@ st.success(f"Prediction: {'Approved' if prediction==0 else 'Rejected'}")
 ## 🞼 Application UI & Screenshots
 
 ### 🔘 Home Page
-![Home Page](assets/screenshots/home.png)
+![Home Page](assets/home.png)
+
+### 🔢 Prediction Form 
+![Prediction Result](assets/loan_form.png)
 
 ### 🔢 Prediction Result
-![Prediction Result](assets/screenshots/result.png)
+![Prediction Result](assets/result.png)
 
-### 📉 SHAP Explainability
-![Explainability](assets/screenshots/shap_output.png)
+### 📉 ROC AUC Curve
+![ROC AUC CURVE](assets/roc.png)
 
-### 🎟️ Animated Workflow
-![Animated Demo](assets/screenshots/animated_demo.gif)
+### 🎟️ Precision_Recall Curve
+![Precision_Recall_Curve](assets/precsion_recall.png)
+
+### 🎟️ Precision_Recall Curve
+![Precision_Recall_Curve](assets/precsion_recall.png)
+
+### 🎟️ Loan KPI
+![KPI](assets/kpi.png)
+
+### 🎟️ 3D SCATTER
+![KPI](assets/scatter.png)
 
 ---
 
@@ -118,9 +117,9 @@ st.success(f"Prediction: {'Approved' if prediction==0 else 'Rejected'}")
 > What makes this project stand out:
 
 - 🧠 **Explainable AI (XAI)**: Integrates SHAP values to explain each prediction
-- 🧬 **Bias Check Module (Coming Soon)**: Identify model fairness issues across genders/ages
+- 🧬 **Bias Check Module**: Identify model fairness issues across genders/ages
 - ✨ **Risk Interpretation Layer**: Converts numeric predictions into easy-to-understand advice
-- 🚀 **Model Comparator**: Visual comparison between Logistic, Random Forest & XGBoost (Planned)
+- 🚀 **Model Comparator**: Visual comparison between Logistic, Random Forest & XGBoost
 
 ---
 
@@ -178,9 +177,9 @@ git push origin feature/new-awesome-feature
 
 | Platform       | Link                                    |
 |----------------|------------------------------------------|
-| 💼 LinkedIn    | [Ankit Sharma](https://www.linkedin.com/in/yourlinkedin/) |
-| 💻 GitHub      | [ankitsharma](https://github.com/yourusername)             |
-| 📧 Email       | ankit.yourmail@example.com                 |
+| 💼 LinkedIn    | [Ankit Yadav](https://www.linkedin.com/in/ankityadav-datasolver/) |
+| 💻 GitHub      | [Ankit Yadav](https://github.com/ankityadav-problemsolver/)             |
+| 📧 Email       | ankitofficial151@gmail.com                 |
 
 ---
 
