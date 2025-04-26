@@ -146,6 +146,23 @@
         "documentation": {}
     },
     {
+        "label": "json",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "json",
+        "description": "json",
+        "detail": "json",
+        "documentation": {}
+    },
+    {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "load_lottieurl",
         "kind": 2,
         "importPath": "main",
@@ -155,11 +172,29 @@
         "documentation": {}
     },
     {
+        "label": "get_latest_model",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def get_latest_model():\n    \"\"\"Find the latest model and its metadata\"\"\"\n    try:\n        # Get all metadata files\n        meta_files = [f for f in os.listdir(MODEL_DIR) \n                    if f.endswith('_metadata.json')]\n        if not meta_files:\n            st.error(\"No model metadata files found\")\n            return None, None, None\n        # Sort by creation date (newest first)",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "get_data_status",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def get_data_status():\n    \"\"\"Check data file status for freshness\"\"\"\n    try:\n        return os.path.getmtime(DATA_PATH) if os.path.exists(DATA_PATH) else None\n    except Exception as e:\n        st.error(f\"Data status check failed: {str(e)}\")\n        return None\n# Resource loading with smart caching\n@st.cache_resource(show_spinner=False, ttl=3600)\ndef load_model(model_path):",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
         "label": "load_model",
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def load_model():\n    try:\n        model_path = os.path.join('best_model', 'best_model_Random_Forest.pkl')\n        model = joblib.load(model_path)\n        return model\n    except Exception as e:\n        st.error(f\"Error loading model: {str(e)}\")\n        return None\n@st.cache_data(show_spinner=False)\ndef load_data():",
+        "peekOfCode": "def load_model(model_path):\n    \"\"\"Load model with validation\"\"\"\n    try:\n        model = joblib.load(model_path)\n        # Moved toast notification outside cached function\n        return model\n    except Exception as e:\n        st.error(f\"Model load failed: {str(e)}\")\n        return None\n# Modified load_data to remove Streamlit elements from cached function",
         "detail": "main",
         "documentation": {}
     },
@@ -168,7 +203,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def load_data():\n    try:\n        data_path = os.path.join('notebooks', 'cleaned_loan_predictions.csv')\n        df = pd.read_csv(data_path)\n        # Convert categorical columns to numeric for ROC curve\n        if 'REASON' in df.columns:\n            df['REASON'] = df['REASON'].map({'HomeImp': 0, 'DebtCon': 1})\n        if 'JOB' in df.columns:\n            df['JOB'] = pd.factorize(df['JOB'])[0]\n        return df",
+        "peekOfCode": "def load_data(_data_status):\n    \"\"\"Load and preprocess data without Streamlit elements\"\"\"\n    try:\n        df = pd.read_csv(DATA_PATH)\n        # Dynamic preprocessing\n        category_mappings = {\n            'REASON': {'HomeImp': 0, 'DebtCon': 1},\n            'JOB': lambda x: pd.factorize(x)[0]\n        }\n        for col, mapping in category_mappings.items():",
         "detail": "main",
         "documentation": {}
     },
@@ -241,6 +276,42 @@
         "importPath": "main",
         "description": "main",
         "peekOfCode": "loan_risk_anim = load_lottieurl(\"https://assets4.lottiefiles.com/packages/lf20_kyu7xb1v.json\")\n# Premium Custom CSS with Dark Theme\nst.markdown(f\"\"\"\n<style>\n    /* Base Styles */\n    .main {{\n        background: {COLOR_SCHEME['background']};\n        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n        color: {COLOR_SCHEME['text']};\n    }}",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "MODEL_DIR",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "MODEL_DIR = \"best_model\"\nDATA_PATH = os.path.join('notebooks', 'cleaned_loan_predictions.csv')\ndef get_latest_model():\n    \"\"\"Find the latest model and its metadata\"\"\"\n    try:\n        # Get all metadata files\n        meta_files = [f for f in os.listdir(MODEL_DIR) \n                    if f.endswith('_metadata.json')]\n        if not meta_files:\n            st.error(\"No model metadata files found\")",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "DATA_PATH",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "DATA_PATH = os.path.join('notebooks', 'cleaned_loan_predictions.csv')\ndef get_latest_model():\n    \"\"\"Find the latest model and its metadata\"\"\"\n    try:\n        # Get all metadata files\n        meta_files = [f for f in os.listdir(MODEL_DIR) \n                    if f.endswith('_metadata.json')]\n        if not meta_files:\n            st.error(\"No model metadata files found\")\n            return None, None, None",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "metrics",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "metrics = metadata.get('performance_metrics', {})\nst.markdown(\"\"\"\n    <div style=\"display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;\">\n\"\"\", unsafe_allow_html=True)\nmetric_config = [\n    (\"🎯 Accuracy\", metrics.get('Accuracy', 0), \"Percentage of correct predictions\"),\n    (\"🎯 Precision\", metrics.get('Precision', 0), \"True positive rate\"),\n    (\"🎯 Recall\", metrics.get('Recall', 0), \"Positive class coverage\"),\n    (\"🎯 F1 Score\", metrics.get('F1 Score', 0), \"Harmonic mean balance\"),\n    (\"📈 AUC-ROC\", metrics.get('AUC', 0), \"Classification strength score\")",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "metric_config",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "metric_config = [\n    (\"🎯 Accuracy\", metrics.get('Accuracy', 0), \"Percentage of correct predictions\"),\n    (\"🎯 Precision\", metrics.get('Precision', 0), \"True positive rate\"),\n    (\"🎯 Recall\", metrics.get('Recall', 0), \"Positive class coverage\"),\n    (\"🎯 F1 Score\", metrics.get('F1 Score', 0), \"Harmonic mean balance\"),\n    (\"📈 AUC-ROC\", metrics.get('AUC', 0), \"Classification strength score\")\n]\nfor title, value, desc in metric_config:\n    # Format value based on metric type first\n    if title == \"📈 AUC-ROC\":",
         "detail": "main",
         "documentation": {}
     },

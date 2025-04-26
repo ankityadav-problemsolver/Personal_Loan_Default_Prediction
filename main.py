@@ -239,37 +239,266 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Load resources with error handling and caching optimizations
-@st.cache_resource(show_spinner=False)
-def load_model():
+# @st.cache_resource(show_spinner=False)
+# def load_model():
+#     try:
+#         model_path = os.path.join('best_model', 'best_model_Random_Forest.pkl')
+#         model = joblib.load(model_path)
+#         return model
+#     except Exception as e:
+#         st.error(f"Error loading model: {str(e)}")
+#         return None
+
+# @st.cache_data(show_spinner=False)
+# def load_data():
+#     try:
+#         data_path = os.path.join('notebooks', 'cleaned_loan_predictions.csv')
+#         df = pd.read_csv(data_path)
+        
+#         # Convert categorical columns to numeric for ROC curve
+#         if 'REASON' in df.columns:
+#             df['REASON'] = df['REASON'].map({'HomeImp': 0, 'DebtCon': 1})
+#         if 'JOB' in df.columns:
+#             df['JOB'] = pd.factorize(df['JOB'])[0]
+            
+#         return df
+#     except Exception as e:
+#         st.error(f"Error loading data: {str(e)}")
+#         return pd.DataFrame()
+
+# # Load resources with progress indicators
+# with st.spinner('Loading model and data...'):
+#     model = load_model()
+#     df = load_data()
+
+
+
+import os
+import json
+import joblib
+import pandas as pd
+import streamlit as st
+from datetime import datetime
+
+# Configuration
+MODEL_DIR = "best_model"
+DATA_PATH = os.path.join('notebooks', 'cleaned_loan_predictions.csv')
+
+def get_latest_model():
+    """Find the latest model and its metadata"""
     try:
-        model_path = os.path.join('best_model', 'best_model_Random_Forest.pkl')
-        model = joblib.load(model_path)
-        return model
+        # Get all metadata files
+        meta_files = [f for f in os.listdir(MODEL_DIR) 
+                    if f.endswith('_metadata.json')]
+        
+        if not meta_files:
+            st.error("No model metadata files found")
+            return None, None, None
+            
+        # Sort by creation date (newest first)
+        meta_files.sort(reverse=True)
+        latest_meta = meta_files[0]
+        
+        # Load metadata
+        meta_path = os.path.join(MODEL_DIR, latest_meta)
+        with open(meta_path) as f:
+            metadata = json.load(f)
+        
+        # Verify model file exists - fix path issue
+        model_path = metadata.get('model_path')
+        if model_path and not os.path.isabs(model_path):
+            model_path = os.path.join(MODEL_DIR, os.path.basename(model_path))
+            
+        if not model_path or not os.path.exists(model_path):
+            st.error(f"Model file not found: {model_path}")
+            return None, None, None
+            
+        return model_path, meta_path, metadata
+        
     except Exception as e:
-        st.error(f"Error loading model: {str(e)}")
+        st.error(f"Model discovery error: {str(e)}")
+        return None, None, None
+
+def get_data_status():
+    """Check data file status for freshness"""
+    try:
+        return os.path.getmtime(DATA_PATH) if os.path.exists(DATA_PATH) else None
+    except Exception as e:
+        st.error(f"Data status check failed: {str(e)}")
         return None
 
-@st.cache_data(show_spinner=False)
-def load_data():
+# Resource loading with smart caching
+@st.cache_resource(show_spinner=False, ttl=3600)
+def load_model(model_path):
+    """Load model with validation"""
     try:
-        data_path = os.path.join('notebooks', 'cleaned_loan_predictions.csv')
-        df = pd.read_csv(data_path)
+        model = joblib.load(model_path)
+        # Moved toast notification outside cached function
+        return model
+    except Exception as e:
+        st.error(f"Model load failed: {str(e)}")
+        return None
+
+# Modified load_data to remove Streamlit elements from cached function
+@st.cache_data(show_spinner=False, ttl=300)
+def load_data(_data_status):
+    """Load and preprocess data without Streamlit elements"""
+    try:
+        df = pd.read_csv(DATA_PATH)
         
-        # Convert categorical columns to numeric for ROC curve
-        if 'REASON' in df.columns:
-            df['REASON'] = df['REASON'].map({'HomeImp': 0, 'DebtCon': 1})
-        if 'JOB' in df.columns:
-            df['JOB'] = pd.factorize(df['JOB'])[0]
-            
+        # Dynamic preprocessing
+        category_mappings = {
+            'REASON': {'HomeImp': 0, 'DebtCon': 1},
+            'JOB': lambda x: pd.factorize(x)[0]
+        }
+        
+        for col, mapping in category_mappings.items():
+            if col in df.columns:
+                df[col] = df[col].map(mapping) if isinstance(mapping, dict) else mapping(df[col])
+        
         return df
     except Exception as e:
-        st.error(f"Error loading data: {str(e)}")
         return pd.DataFrame()
 
-# Load resources with progress indicators
-with st.spinner('Loading model and data...'):
-    model = load_model()
-    df = load_data()
+# Main loading process
+with st.spinner('Initializing application...'):
+    # Dynamic model loading
+    model_path, meta_path, metadata = get_latest_model()
+    model = load_model(model_path) if model_path else None
+    
+    # Real-time data loading
+    data_status = get_data_status()
+    df = load_data(data_status) if data_status else pd.DataFrame()
+
+    # Show notifications after loading
+    if model_path:
+        st.toast(f"Model loaded: {os.path.basename(model_path)}", icon="🤖")
+    if not df.empty:
+        st.toast("Data successfully refreshed", icon="🔄")
+
+# # Status display
+# if model and metadata:
+#     st.sidebar.subheader("Model Information")
+#     st.sidebar.write(f"**Name:** {metadata.get('model_name', 'N/A')}")
+#     st.sidebar.write(f"**Version:** {metadata.get('version', 'N/A')}")
+#     st.sidebar.write(f"**Created:** {metadata.get('creation_date', 'N/A')}")
+    
+#     st.sidebar.subheader("Performance Metrics")
+#     metrics = metadata.get('performance_metrics', {})
+#     st.sidebar.metric("Accuracy", f"{metrics.get('Accuracy', 0):.2%}")
+#     st.sidebar.metric("Precision", f"{metrics.get('Precision', 0):.2%}")
+#     st.sidebar.metric("Recall", f"{metrics.get('Recall', 0):.2%}")
+#     st.sidebar.metric("F1 Score", f"{metrics.get('F1 Score', 0):.2%}")
+#     st.sidebar.metric("AUC", f"{metrics.get('AUC', 0):.2f}")
+    
+# if not df.empty and data_status:
+#     st.caption(f"Data Updated: {datetime.fromtimestamp(data_status).strftime('%Y-%m-%d %H:%M:%S')}") 
+# Add custom CSS for theme adaptation
+# Add custom CSS for modern theme
+
+# Custom CSS for cohesive visual design
+st.markdown("""
+    <style>
+    :root {
+        --primary-dark: #0A192F;    /* Deep Navy */
+        --secondary-dark: #172A45;  /* Medium Navy */
+        --accent-teal: #64FFDA;     /* Bright Teal */
+        --text-light: #CCD6F6;      /* Soft White */
+    }
+
+    .dashboard-header {
+        background: var(--primary-dark);
+        border-left: 5px solid var(--accent-teal);
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .metric-card {
+        background: var(--secondary-dark);
+        border-radius: 10px;
+        padding: 1.5rem;
+        border: 1px solid rgba(100, 255, 218, 0.15);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(100, 255, 218, 0.2);
+    }
+
+    .metric-value {
+        font-size: 2.2rem;
+        font-weight: 600;
+        color: var(--accent-teal);
+        margin: 0.5rem 0;
+    }
+
+    .info-badge {
+        background: rgba(100, 255, 218, 0.1);
+        color: var(--accent-teal);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Dashboard Implementation
+if model and metadata:
+    st.markdown(f"""
+        <div class="dashboard-header">
+            <h1 style="color: var(--text-light); margin-bottom: 1rem;">🌌 Model Intelligence Dashboard</h1>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; color: var(--text-light);">
+                <div>
+                    <div class="info-badge">Model Name</div>
+                    <p style="font-size: 1.2rem; margin: 0.5rem 0;">{metadata['model_name']}</p>
+                </div>
+                <div>
+                    <div class="info-badge">Version</div>
+                    <p style="font-size: 1.2rem; margin: 0.5rem 0;">{metadata['version'].split('_')[0]}</p>
+                </div>
+                <div>
+                    <div class="info-badge">Created</div>
+                    <p style="font-size: 1.2rem; margin: 0.5rem 0;">
+                        {datetime.strptime(metadata['version'], "%Y%m%d_%H%M%S").strftime("%Y-%m-%d %H:%M")}
+                    </p>
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+# Performance Metrics Grid
+metrics = metadata.get('performance_metrics', {})
+st.markdown("""
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+""", unsafe_allow_html=True)
+
+metric_config = [
+    ("🎯 Accuracy", metrics.get('Accuracy', 0), "Percentage of correct predictions"),
+    ("🎯 Precision", metrics.get('Precision', 0), "True positive rate"),
+    ("🎯 Recall", metrics.get('Recall', 0), "Positive class coverage"),
+    ("🎯 F1 Score", metrics.get('F1 Score', 0), "Harmonic mean balance"),
+    ("📈 AUC-ROC", metrics.get('AUC', 0), "Classification strength score")
+]
+
+for title, value, desc in metric_config:
+    # Format value based on metric type first
+    if title == "📈 AUC-ROC":
+        formatted_value = f"{float(value):.2f}"  # Ensure float conversion
+    else:
+        formatted_value = f"{float(value):.2%}"  # Ensure float conversion
+    
+    st.markdown(f"""
+        <div class="metric-card">
+            <h4 style="color: var(--accent); margin: 0 0 1rem 0;">{title}</h4>
+            <div class="metric-value">{formatted_value}</div>
+            <p style="color: var(--text); opacity: 0.8; font-size: 0.9rem; margin: 0;">{desc}</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)
+
 
 # Sidebar Configuration
 with st.sidebar:
@@ -384,7 +613,6 @@ with tab1:
 
             # Feature Engineering
             input_df['LOAN_TO_VALUE'] = input_df['LOAN'] / input_df['VALUE']
-            input_df['DEBT_TO_INCOME'] = input_df['DEBTINC']
             input_df['LOAN_TO_MORTDUE'] = input_df['LOAN'] / (input_df['MORTDUE'] + 1)
             input_df['DEROG_DELINQ_SUM'] = input_df['DEROG'] + input_df['DELINQ']
             input_df['CLAGE_PER_CLNO'] = input_df['CLAGE'] / (input_df['CLNO'] + 1)
@@ -409,12 +637,14 @@ with tab1:
             input_df['YOJ_BINNED'] = pd.factorize(input_df['YOJ_BINNED'])[0]
             input_df['CLAGE_BINNED'] = pd.factorize(input_df['CLAGE_BINNED'])[0]
 
-            # Align with model features
+            # Strict feature alignment with model
             if hasattr(model, 'feature_names_in_'):
-                missing = set(model.feature_names_in_) - set(input_df.columns)
-                for m in missing:
-                    input_df[m] = 0
-                input_df = input_df[model.feature_names_in_]
+                # Remove any extra columns not in model's features
+                input_df = input_df.reindex(columns=model.feature_names_in_, fill_value=0)
+            else:
+                # Fallback for models without feature names (legacy)
+                st.warning("⚠️ Model feature names not available - ensure manual alignment")
+                input_df = input_df.iloc[:, :19]  # Keep only first 19 features if needed
 
             # Prediction
             prediction = model.predict(input_df)[0]
@@ -516,55 +746,86 @@ with tab1:
                 st.error(f"Error generating ROC curve: {str(e)}")
         
         # Feature Importance with proper handling
-        if hasattr(model, 'feature_importances_'):
-            try:
-                with st.container():
-                    st.markdown("#### Key Risk Drivers (Feature Importance)")
-                    if hasattr(model, 'feature_names_in_'):
-                        features = model.feature_names_in_
-                        importances = model.feature_importances_
-                    else:
-                        features = [f"Feature {i}" for i in range(len(model.feature_importances_))]
-                        importances = model.feature_importances_
-                    
-                    # Create DataFrame and sort
-                    feat_imp = pd.DataFrame({
-                        'Feature': features,
-                        'Importance': importances
-                    }).sort_values('Importance', ascending=True)  # Sort for horizontal bar chart
-                    
-                    # Create horizontal bar chart
-                    fig = px.bar(
-                        feat_imp.tail(15),  # Show top 15 features
-                        x='Importance',
-                        y='Feature',
-                        orientation='h',
-                        color='Importance',
-                        color_continuous_scale='Viridis',
-                        title=''
-                    )
-                    fig.update_layout(
-                        height=500,
-                        yaxis={'categoryorder':'total ascending'},
-                        margin=dict(l=100, r=50, b=50, t=50),
-                        plot_bgcolor=COLOR_SCHEME['card'],
-                        paper_bgcolor=COLOR_SCHEME['background'],
-                        font=dict(color=COLOR_SCHEME['text']),
-                        coloraxis_colorbar=dict(
-                            title='Importance',
-                            tickfont=dict(color=COLOR_SCHEME['text'])
-                        )
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                    st.markdown(f"""
-                    <div style="color:{COLOR_SCHEME['text']};">
-                        <p>This chart shows which factors most influence the model's risk assessment. 
-                        Higher values indicate features that contribute more to predicting loan defaults. 
-                        Understanding these drivers helps in making informed lending decisions and explaining model behavior.</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Error generating feature importance: {str(e)}")
+        # Feature mapping dictionary - replace with your actual feature names
+    FEATURE_MAPPING = {
+        'Feature 0': 'Loan Amount',
+        'Feature 1': 'Credit Score',
+        'Feature 2': 'Debt-to-Income Ratio',
+        'Feature 4': 'Employment Length',
+        'Feature 5': 'Annual Income',
+        'Feature 8': 'Loan Purpose',
+        'Feature 9': 'Years at Current Address',
+        'Feature 10': 'Number of Open Accounts',
+        'Feature 11': 'Number of Credit Problems',
+        'Feature 12': 'Current Credit Balance',
+        'Feature 13': 'Maximum Open Credit',
+        'Feature 14': 'Bankruptcies',
+        'Feature 15': 'Tax Liens',
+        'Feature 17': 'Number of Late Payments (30-59 days)',
+        'Feature 18': 'Number of Late Payments (60-89 days)'
+    }
+
+    # Feature Importance with proper names
+    if hasattr(model, 'feature_importances_'):
+        try:
+            with st.container():
+                st.markdown("#### Key Risk Drivers (Feature Importance)")
+                
+                # Get features and importances
+                if hasattr(model, 'feature_names_in_'):
+                    features = model.feature_names_in_
+                    importances = model.feature_importances_
+                else:
+                    features = [f"Feature {i}" for i in range(len(model.feature_importances_))]
+                    importances = model.feature_importances_
+                
+                # Map feature numbers to proper names
+                named_features = [FEATURE_MAPPING.get(f, f) for f in features]
+                
+                # Create DataFrame and sort
+                feat_imp = pd.DataFrame({
+                    'Feature': named_features,
+                    'Importance': importances,
+                    'Original_Feature': features  # Keep original for reference
+                }).sort_values('Importance', ascending=True)
+                
+                # Create horizontal bar chart
+                fig = px.bar(
+                    feat_imp.tail(15),  # Show top 15 features
+                    x='Importance',
+                    y='Feature',
+                    orientation='h',
+                    color='Importance',
+                    color_continuous_scale='Viridis',
+                    title='',
+                    hover_data=['Original_Feature']  # Show original feature number in tooltip
+                )
+                
+                fig.update_layout(
+                    height=500,
+                    yaxis={'categoryorder':'total ascending'},
+                    margin=dict(l=100, r=50, b=50, t=50),
+                    plot_bgcolor=COLOR_SCHEME['card'],
+                    paper_bgcolor=COLOR_SCHEME['background'],
+                    font=dict(color=COLOR_SCHEME['text']),
+                    coloraxis_colorbar=dict(
+                        title='Importance',
+                        tickfont=dict(color=COLOR_SCHEME['text']))
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                st.markdown(f"""
+                <div style="color:{COLOR_SCHEME['text']};">
+                    <p>This chart shows which factors most influence the model's risk assessment. 
+                    Higher values indicate features that contribute more to predicting loan defaults. 
+                    Understanding these drivers helps in making informed lending decisions and explaining model behavior.</p>
+                    <p><small>Hover over bars to see the original feature numbers</small></p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+        except Exception as e:
+            st.error(f"Error generating feature importance: {str(e)}")
 
 # Data Analytics Tab
 with tab2:
