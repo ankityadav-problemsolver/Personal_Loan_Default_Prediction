@@ -76,27 +76,31 @@ st.success(f"Prediction: {'Approved' if prediction==0 else 'Rejected'}")
 ## 🞼 Application UI & Screenshots
 
 ### 🔘 Home Page
+
 ![Home Page](assets/home.png)
 
-### 🔢 Prediction Form 
+### 🔢 Prediction Form
+
 ![Prediction Result](assets/loan_form.png)
 
 ### 🔢 Prediction Result
+
 ![Prediction Result](assets/result.png)
 
 ### 📉 ROC AUC Curve
+
 ![ROC AUC CURVE](assets/roc.png)
 
 ### 🎟️ Precision_Recall Curve
-![Precision_Recall_Curve](assets/precsion_recall.png)
 
-### 🎟️ Precision_Recall Curve
 ![Precision_Recall_Curve](assets/precsion_recall.png)
 
 ### 🎟️ Loan KPI
+
 ![KPI](assets/kpi.png)
 
 ### 🎟️ 3D SCATTER
+
 ![KPI](assets/scatter.png)
 
 ---
@@ -159,6 +163,7 @@ We'd love your help! You can:
 - 🤝 Translate into local languages
 
 ### How to Contribute
+
 ```bash
 # Fork the repository
 # Create your feature branch
@@ -179,7 +184,7 @@ git push origin feature/new-awesome-feature
 |----------------|------------------------------------------|
 | 💼 LinkedIn    | [Ankit Yadav](https://www.linkedin.com/in/ankityadav-datasolver/) |
 | 💻 GitHub      | [Ankit Yadav](https://github.com/ankityadav-problemsolver/)             |
-| 📧 Email       | ankitofficial151@gmail.com                 |
+| 📧 Email       | <ankitofficial151@gmail.com>                 |
 
 ---
 
@@ -196,6 +201,7 @@ Use this architecture as a blueprint for any classification-based real-time pred
 ---
 
 ## 🔹 Tags
+
 `#LoanPrediction` `#StreamlitApp` `#ExplainableAI` `#SHAP` `#FinanceAI` `#BankingML` `#CreditScoring`
 
 ---
