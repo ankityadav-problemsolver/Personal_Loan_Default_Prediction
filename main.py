@@ -6,7 +6,6 @@ import shap
 import plotly.express as px
 import plotly.graph_objects as go
 from sklearn.metrics import roc_curve, auc
-from streamlit_shap import st_shap
 import time
 import os
 from time import strftime
