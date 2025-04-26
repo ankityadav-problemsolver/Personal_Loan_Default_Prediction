@@ -72,6 +72,11 @@ st.success(f"Prediction: {'Approved' if prediction==0 else 'Rejected'}")
 ```
 
 ---
+[Automate EDA REPORT](https://ankityadav-problemsolver.github.io/Personal_Loan_Default_Prediction/)
+
+
+---
+---
 
 ## 🞼 Application UI & Screenshots
 
