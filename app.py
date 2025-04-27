@@ -245,142 +245,142 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # Load resources with error handling and caching optimizations
-# @st.cache_resource(show_spinner=False)
-# def load_model():
-#     try:
-#         model_path = os.path.join('best_model', 'best_model_Random_Forest.pkl')
-#         model = joblib.load(model_path)
-#         return model
-#     except Exception as e:
-#         st.error(f"Error loading model: {str(e)}")
-#         return None
-
-# @st.cache_data(show_spinner=False)
-# def load_data():
-#     try:
-#         data_path = os.path.join('notebooks', 'cleaned_loan_predictions.csv')
-#         df = pd.read_csv(data_path)
-        
-#         # Convert categorical columns to numeric for ROC curve
-#         if 'REASON' in df.columns:
-#             df['REASON'] = df['REASON'].map({'HomeImp': 0, 'DebtCon': 1})
-#         if 'JOB' in df.columns:
-#             df['JOB'] = pd.factorize(df['JOB'])[0]
-            
-#         return df
-#     except Exception as e:
-#         st.error(f"Error loading data: {str(e)}")
-#         return pd.DataFrame()
-
-# # Load resources with progress indicators
-# with st.spinner('Loading model and data...'):
-#     model = load_model()
-#     df = load_data()
-
-
-
-import os
-import json
-import joblib
-import pandas as pd
-import streamlit as st
-from datetime import datetime
-
-# Configuration
-MODEL_DIR = "best_model"
-DATA_PATH = os.path.join('notebooks', 'cleaned_loan_predictions.csv')
-
-def get_latest_model():
-    """Find the latest model and its metadata"""
+@st.cache_resource(show_spinner=False)
+def load_model():
     try:
-        # Get all metadata files
-        meta_files = [f for f in os.listdir(MODEL_DIR) 
-                    if f.endswith('_metadata.json')]
-        
-        if not meta_files:
-            st.error("No model metadata files found")
-            return None, None, None
-            
-        # Sort by creation date (newest first)
-        meta_files.sort(reverse=True)
-        latest_meta = meta_files[0]
-        
-        # Load metadata
-        meta_path = os.path.join(MODEL_DIR, latest_meta)
-        with open(meta_path) as f:
-            metadata = json.load(f)
-        
-        # Verify model file exists - fix path issue
-        model_path = metadata.get('model_path')
-        if model_path and not os.path.isabs(model_path):
-            model_path = os.path.join(MODEL_DIR, os.path.basename(model_path))
-            
-        if not model_path or not os.path.exists(model_path):
-            st.error(f"Model file not found: {model_path}")
-            return None, None, None
-            
-        return model_path, meta_path, metadata
-        
-    except Exception as e:
-        st.error(f"Model discovery error: {str(e)}")
-        return None, None, None
-
-def get_data_status():
-    """Check data file status for freshness"""
-    try:
-        return os.path.getmtime(DATA_PATH) if os.path.exists(DATA_PATH) else None
-    except Exception as e:
-        st.error(f"Data status check failed: {str(e)}")
-        return None
-
-# Resource loading with smart caching
-@st.cache_resource(show_spinner=False, ttl=3600)
-def load_model(model_path):
-    """Load model with validation"""
-    try:
+        model_path = os.path.join('best_model', 'best_model_Random_Forest.pkl')
         model = joblib.load(model_path)
-        # Moved toast notification outside cached function
         return model
     except Exception as e:
-        st.error(f"Model load failed: {str(e)}")
+        st.error(f"Error loading model: {str(e)}")
         return None
 
-# Modified load_data to remove Streamlit elements from cached function
-@st.cache_data(show_spinner=False, ttl=300)
-def load_data(_data_status):
-    """Load and preprocess data without Streamlit elements"""
+@st.cache_data(show_spinner=False)
+def load_data():
     try:
-        df = pd.read_csv(DATA_PATH)
+        data_path = os.path.join('notebooks', 'cleaned_loan_predictions.csv')
+        df = pd.read_csv(data_path)
         
-        # Dynamic preprocessing
-        category_mappings = {
-            'REASON': {'HomeImp': 0, 'DebtCon': 1},
-            'JOB': lambda x: pd.factorize(x)[0]
-        }
-        
-        for col, mapping in category_mappings.items():
-            if col in df.columns:
-                df[col] = df[col].map(mapping) if isinstance(mapping, dict) else mapping(df[col])
-        
+        # Convert categorical columns to numeric for ROC curve
+        if 'REASON' in df.columns:
+            df['REASON'] = df['REASON'].map({'HomeImp': 0, 'DebtCon': 1})
+        if 'JOB' in df.columns:
+            df['JOB'] = pd.factorize(df['JOB'])[0]
+            
         return df
     except Exception as e:
+        st.error(f"Error loading data: {str(e)}")
         return pd.DataFrame()
 
-# Main loading process
-with st.spinner('Initializing application...'):
-    # Dynamic model loading
-    model_path, meta_path, metadata = get_latest_model()
-    model = load_model(model_path) if model_path else None
-    
-    # Real-time data loading
-    data_status = get_data_status()
-    df = load_data(data_status) if data_status else pd.DataFrame()
+# Load resources with progress indicators
+with st.spinner('Loading model and data...'):
+    model = load_model()
+    df = load_data()
 
-    # Show notifications after loading
-    if model_path:
-        st.toast(f"Model loaded: {os.path.basename(model_path)}", icon="🤖")
-    if not df.empty:
-        st.toast("Data successfully refreshed", icon="🔄")
+
+
+# import os
+# import json
+# import joblib
+# import pandas as pd
+# import streamlit as st
+# from datetime import datetime
+
+# # Configuration
+# MODEL_DIR = "best_model"
+# DATA_PATH = os.path.join('notebooks', 'cleaned_loan_predictions.csv')
+
+# def get_latest_model():
+#     """Find the latest model and its metadata"""
+#     try:
+#         # Get all metadata files
+#         meta_files = [f for f in os.listdir(MODEL_DIR) 
+#                     if f.endswith('_metadata.json')]
+        
+#         if not meta_files:
+#             st.error("No model metadata files found")
+#             return None, None, None
+            
+#         # Sort by creation date (newest first)
+#         meta_files.sort(reverse=True)
+#         latest_meta = meta_files[0]
+        
+#         # Load metadata
+#         meta_path = os.path.join(MODEL_DIR, latest_meta)
+#         with open(meta_path) as f:
+#             metadata = json.load(f)
+        
+#         # Verify model file exists - fix path issue
+#         model_path = metadata.get('model_path')
+#         if model_path and not os.path.isabs(model_path):
+#             model_path = os.path.join(MODEL_DIR, os.path.basename(model_path))
+            
+#         if not model_path or not os.path.exists(model_path):
+#             st.error(f"Model file not found: {model_path}")
+#             return None, None, None
+            
+#         return model_path, meta_path, metadata
+        
+#     except Exception as e:
+#         st.error(f"Model discovery error: {str(e)}")
+#         return None, None, None
+
+# def get_data_status():
+#     """Check data file status for freshness"""
+#     try:
+#         return os.path.getmtime(DATA_PATH) if os.path.exists(DATA_PATH) else None
+#     except Exception as e:
+#         st.error(f"Data status check failed: {str(e)}")
+#         return None
+
+# # Resource loading with smart caching
+# @st.cache_resource(show_spinner=False, ttl=3600)
+# def load_model(model_path):
+#     """Load model with validation"""
+#     try:
+#         model = joblib.load(model_path)
+#         # Moved toast notification outside cached function
+#         return model
+#     except Exception as e:
+#         st.error(f"Model load failed: {str(e)}")
+#         return None
+
+# # Modified load_data to remove Streamlit elements from cached function
+# @st.cache_data(show_spinner=False, ttl=300)
+# def load_data(_data_status):
+#     """Load and preprocess data without Streamlit elements"""
+#     try:
+#         df = pd.read_csv(DATA_PATH)
+        
+#         # Dynamic preprocessing
+#         category_mappings = {
+#             'REASON': {'HomeImp': 0, 'DebtCon': 1},
+#             'JOB': lambda x: pd.factorize(x)[0]
+#         }
+        
+#         for col, mapping in category_mappings.items():
+#             if col in df.columns:
+#                 df[col] = df[col].map(mapping) if isinstance(mapping, dict) else mapping(df[col])
+        
+#         return df
+#     except Exception as e:
+#         return pd.DataFrame()
+
+# # Main loading process
+# with st.spinner('Initializing application...'):
+#     # Dynamic model loading
+#     model_path, meta_path, metadata = get_latest_model()
+#     model = load_model(model_path) if model_path else None
+    
+#     # Real-time data loading
+#     data_status = get_data_status()
+#     df = load_data(data_status) if data_status else pd.DataFrame()
+
+#     # Show notifications after loading
+#     if model_path:
+#         st.toast(f"Model loaded: {os.path.basename(model_path)}", icon="🤖")
+#     if not df.empty:
+#         st.toast("Data successfully refreshed", icon="🔄")
 
 
 
@@ -432,60 +432,60 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Dashboard Implementation
-if model and metadata:
-    st.markdown(f"""
-        <div class="dashboard-header">
-            <h1 style="color: var(--text-light); margin-bottom: 1rem;">🌌 Model Intelligence Dashboard</h1>
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; color: var(--text-light);">
-                <div>
-                    <div class="info-badge">Model Name</div>
-                    <p style="font-size: 1.2rem; margin: 0.5rem 0;">{metadata['model_name']}</p>
-                </div>
-                <div>
-                    <div class="info-badge">Version</div>
-                    <p style="font-size: 1.2rem; margin: 0.5rem 0;">{metadata['version'].split('_')[0]}</p>
-                </div>
-                <div>
-                    <div class="info-badge">Created</div>
-                    <p style="font-size: 1.2rem; margin: 0.5rem 0;">
-                        {datetime.strptime(metadata['version'], "%Y%m%d_%H%M%S").strftime("%Y-%m-%d %H:%M")}
-                    </p>
-                </div>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+# # Dashboard Implementation
+# if model and metadata:
+#     st.markdown(f"""
+#         <div class="dashboard-header">
+#             <h1 style="color: var(--text-light); margin-bottom: 1rem;">🌌 Model Intelligence Dashboard</h1>
+#             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; color: var(--text-light);">
+#                 <div>
+#                     <div class="info-badge">Model Name</div>
+#                     <p style="font-size: 1.2rem; margin: 0.5rem 0;">{metadata['model_name']}</p>
+#                 </div>
+#                 <div>
+#                     <div class="info-badge">Version</div>
+#                     <p style="font-size: 1.2rem; margin: 0.5rem 0;">{metadata['version'].split('_')[0]}</p>
+#                 </div>
+#                 <div>
+#                     <div class="info-badge">Created</div>
+#                     <p style="font-size: 1.2rem; margin: 0.5rem 0;">
+#                         {datetime.strptime(metadata['version'], "%Y%m%d_%H%M%S").strftime("%Y-%m-%d %H:%M")}
+#                     </p>
+#                 </div>
+#             </div>
+#         </div>
+#     """, unsafe_allow_html=True)
 
-# Performance Metrics Grid
-metrics = metadata.get('performance_metrics', {})
-st.markdown("""
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-""", unsafe_allow_html=True)
+# # Performance Metrics Grid
+# metrics = metadata.get('performance_metrics', {})
+# st.markdown("""
+#     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+# """, unsafe_allow_html=True)
 
-metric_config = [
-    ("🎯 Accuracy", metrics.get('Accuracy', 0), "Percentage of correct predictions"),
-    ("🎯 Precision", metrics.get('Precision', 0), "True positive rate"),
-    ("🎯 Recall", metrics.get('Recall', 0), "Positive class coverage"),
-    ("🎯 F1 Score", metrics.get('F1 Score', 0), "Harmonic mean balance"),
-    ("📈 AUC-ROC", metrics.get('AUC', 0), "Classification strength score")
-]
+# metric_config = [
+#     ("🎯 Accuracy", metrics.get('Accuracy', 0), "Percentage of correct predictions"),
+#     ("🎯 Precision", metrics.get('Precision', 0), "True positive rate"),
+#     ("🎯 Recall", metrics.get('Recall', 0), "Positive class coverage"),
+#     ("🎯 F1 Score", metrics.get('F1 Score', 0), "Harmonic mean balance"),
+#     ("📈 AUC-ROC", metrics.get('AUC', 0), "Classification strength score")
+# ]
 
-for title, value, desc in metric_config:
-    # Format value based on metric type first
-    if title == "📈 AUC-ROC":
-        formatted_value = f"{float(value):.2f}"  # Ensure float conversion
-    else:
-        formatted_value = f"{float(value):.2%}"  # Ensure float conversion
+# for title, value, desc in metric_config:
+#     # Format value based on metric type first
+#     if title == "📈 AUC-ROC":
+#         formatted_value = f"{float(value):.2f}"  # Ensure float conversion
+#     else:
+#         formatted_value = f"{float(value):.2%}"  # Ensure float conversion
     
-    st.markdown(f"""
-        <div class="metric-card">
-            <h4 style="color: var(--accent); margin: 0 0 1rem 0;">{title}</h4>
-            <div class="metric-value">{formatted_value}</div>
-            <p style="color: var(--text); opacity: 0.8; font-size: 0.9rem; margin: 0;">{desc}</p>
-        </div>
-    """, unsafe_allow_html=True)
+#     st.markdown(f"""
+#         <div class="metric-card">
+#             <h4 style="color: var(--accent); margin: 0 0 1rem 0;">{title}</h4>
+#             <div class="metric-value">{formatted_value}</div>
+#             <p style="color: var(--text); opacity: 0.8; font-size: 0.9rem; margin: 0;">{desc}</p>
+#         </div>
+#     """, unsafe_allow_html=True)
 
-st.markdown("</div>", unsafe_allow_html=True)
+# st.markdown("</div>", unsafe_allow_html=True)
 
 
 # Sidebar Configuration
