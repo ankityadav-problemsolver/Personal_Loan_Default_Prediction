@@ -3,5 +3,6 @@
         "activityBar.background": "#4E1939",
         "titleBar.activeBackground": "#6E2450",
         "titleBar.activeForeground": "#FDF8FB"
-    }
+    },
+    "python.pythonPath": "myenv\\Scripts\\python.exe"
 }
